@@ -1,0 +1,135 @@
+@import "tailwindcss";
+
+:root {
+  font-family:
+    Inter,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  color: #f8fafc;
+  background: #0f172a;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+img {
+  max-width: 100%;
+}
+
+/* ===============================
+   NAVIGATION
+================================ */
+
+.nav-link {
+  position: relative;
+  font-weight: 650;
+  color: #cbd5e1;
+  transition: color 0.2s ease;
+}
+
+.nav-link:hover {
+  color: #60a5fa;
+}
+
+.nav-link-active {
+  color: #60a5fa;
+}
+
+.nav-link-active::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -27px;
+  height: 3px;
+  border-radius: 999px;
+  background: #2563eb;
+}
+
+@media (max-width: 1023px) {
+  .nav-link-active::after {
+    display: none;
+  }
+}
+
+/* ===============================
+   DARK WEBSITE THEME
+================================ */
+
+.dark-page {
+  background: #0f172a;
+  color: #f8fafc;
+}
+
+.dark-section {
+  background: #111827;
+}
+
+.dark-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+}
+
+.dark-card:hover {
+  border-color: #2563eb;
+}
+
+.section-title {
+  color: #f8fafc;
+}
+
+.section-text {
+  color: #94a3b8;
+}
+
+.primary-btn {
+  background: #2563eb;
+  color: white;
+}
+
+.primary-btn:hover {
+  background: #3b82f6;
+}
+
+.secondary-btn {
+  background: #1e293b;
+  color: #e2e8f0;
+  border: 1px solid #475569;
+}
+
+.secondary-btn:hover {
+  background: #334155;
+  border-color: #3b82f6;
+}
