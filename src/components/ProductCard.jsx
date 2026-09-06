@@ -8,7 +8,9 @@ function ProductCard({ product }) {
         <img
           src={product.image}
           alt={product.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
 
         <span className="absolute left-3 top-3 rounded-full border border-slate-600 bg-slate-950/90 px-3 py-1 text-xs font-bold text-slate-200">

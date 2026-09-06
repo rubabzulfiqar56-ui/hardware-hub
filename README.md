@@ -1,16 +1,51 @@
-# React + Vite
+# HardwareHub
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + Vite hardware-store frontend with product browsing, categories, cart, checkout, customer authentication, and a local admin dashboard.
 
-Currently, two official plugins are available:
+## Run locally
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Use **Node.js 20+**.
 
-## React Compiler
+```bash
+npm install
+npm run dev
+```
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+Then open the local URL printed by Vite (normally `http://localhost:5173`).
 
-## Expanding the ESLint configuration
+## Production build
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm run build
+npm run preview
+```
+
+## Project structure
+
+```text
+src/
+├── components/       Reusable UI components
+├── context/          Global cart state
+├── data/             Product and category data
+├── pages/             Route-level pages
+└── utils/             Shared browser utilities
+public/
+├── categories/       Optimized WebP category images
+├── products/         Optimized WebP product images
+└── hero.webp         Optimized hero image
+```
+
+## Performance improvements
+
+- Product/category photos are resized and converted to WebP.
+- The homepage shows six featured products instead of loading the complete catalogue immediately.
+- Non-critical routes are lazy-loaded with React `Suspense`.
+- Below-the-fold images use lazy loading and async decoding.
+- The hero image is preloaded because it is the primary above-the-fold visual.
+- Local-storage access is protected against malformed data.
+- Admin-uploaded images are resized/compressed before being stored locally.
+- Navigation uses React Router links to avoid unnecessary full-page reloads.
+
+## Important note
+
+This project currently stores users, carts, products added by the admin, and orders in the browser's `localStorage`. That is suitable for a frontend/demo project, but it is **not a secure production database or authentication system**. For a real store, move authentication, orders, inventory, and payment processing to a backend/database.

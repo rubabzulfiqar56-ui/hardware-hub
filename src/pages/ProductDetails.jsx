@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 import products from "../data/products";
 import { useCart } from "../context/CartContext";
+import { readStorage } from "../utils/storage";
 
 function ProductDetails() {
   const { id } = useParams();
@@ -29,7 +30,7 @@ function ProductDetails() {
 
   const handleAddToCart = () => {
     // Check if user is logged in
-    const savedUser = JSON.parse(localStorage.getItem("user"));
+    const savedUser = readStorage("user", null);
 
     if (!savedUser || !savedUser.isLoggedIn) {
       alert("⚠️ Please login first to add products to cart.");
@@ -60,7 +61,9 @@ function ProductDetails() {
             <img
               src={product.image}
               alt={product.name}
-              className="h-full max-h-[550px] w-full object-cover"
+              loading="lazy"
+                  decoding="async"
+                  className="h-full max-h-[550px] w-full object-cover"
             />
           </div>
 

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { readStorage, writeStorage } from "../utils/storage";
 
 function Register() {
   const navigate = useNavigate();
@@ -36,8 +37,7 @@ function Register() {
       return;
     }
 
-    const existingUsers =
-      JSON.parse(localStorage.getItem("users")) || [];
+    const existingUsers = readStorage("users", []);
 
     const userExists = existingUsers.some(
       (user) => user.email.toLowerCase() === email.toLowerCase()
@@ -57,10 +57,7 @@ function Register() {
 
     existingUsers.push(newUser);
 
-    localStorage.setItem(
-      "users",
-      JSON.stringify(existingUsers)
-    );
+    writeStorage("users", existingUsers);
 
     alert("Account created successfully!");
 

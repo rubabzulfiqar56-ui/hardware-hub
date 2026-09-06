@@ -7,7 +7,9 @@ function CategoryCard({ category }) {
         <img
           src={category.image}
           alt={category.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+          loading="lazy"
+                  decoding="async"
+                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
         />
       </div>
 

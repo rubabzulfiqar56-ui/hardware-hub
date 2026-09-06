@@ -1,9 +1,52 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
+import { readStorage, writeStorage } from "../utils/storage";
 
 function Checkout() {
   const { cart, cartTotal, clearCart } = useCart();
   const navigate = useNavigate();
+
+  // ==========================================
+  // NAME INPUT RESTRICTION
+  // Only letters and spaces are allowed
+  // ==========================================
+
+  const handleNameChange = (e) => {
+    let value = e.target.value;
+
+    value = value.replace(/[^A-Za-z\s]/g, "");
+
+    e.target.value = value;
+  };
+
+  // ==========================================
+  // PHONE INPUT RESTRICTION
+  // Format: 03XX-XXXXXXX
+  // ==========================================
+
+  const handlePhoneChange = (e) => {
+    let value = e.target.value;
+
+    // Remove everything except numbers
+    value = value.replace(/[^0-9]/g, "");
+
+    // Maximum 11 digits
+    value = value.slice(0, 11);
+
+    // Add hyphen after first 4 digits
+    if (value.length > 4) {
+      value =
+        value.slice(0, 4) +
+        "-" +
+        value.slice(4);
+    }
+
+    e.target.value = value;
+  };
+
+  // ==========================================
+  // PLACE ORDER
+  // ==========================================
 
   const handlePlaceOrder = (e) => {
     e.preventDefault();
@@ -14,6 +57,37 @@ function Checkout() {
     const phone = formData.get("phone");
     const address = formData.get("address");
     const paymentMethod = formData.get("paymentMethod");
+
+    // ==========================================
+    // VALIDATE NAME
+    // ==========================================
+
+    const nameRegex = /^[A-Za-z ]+$/;
+
+    if (!nameRegex.test(customerName.trim())) {
+      alert(
+        "Please enter a valid name using letters and spaces only."
+      );
+      return;
+    }
+
+    // ==========================================
+    // VALIDATE PHONE
+    // Format: 03XX-XXXXXXX
+    // ==========================================
+
+    const phoneRegex = /^03[0-9]{2}-[0-9]{7}$/;
+
+    if (!phoneRegex.test(phone.trim())) {
+      alert(
+        "Please enter phone number in this format: 03XX-XXXXXXX"
+      );
+      return;
+    }
+
+    // ==========================================
+    // CREATE NEW ORDER
+    // ==========================================
 
     const newOrder = {
       id: Date.now(),
@@ -27,34 +101,50 @@ function Checkout() {
       createdAt: new Date().toISOString(),
     };
 
-    const existingOrders =
-      JSON.parse(localStorage.getItem("orders")) || [];
+    // ==========================================
+    // GET EXISTING ORDERS
+    // ==========================================
+
+    const existingOrders = readStorage("orders", []);
+
+    // ==========================================
+    // ADD NEW ORDER
+    // ==========================================
 
     const updatedOrders = [
       ...existingOrders,
       newOrder,
     ];
 
-    localStorage.setItem(
-      "orders",
-      JSON.stringify(updatedOrders)
-    );
+    writeStorage("orders", updatedOrders);
 
-    // Empty cart after successful order
+    // ==========================================
+    // EMPTY CART AFTER SUCCESSFUL ORDER
+    // ==========================================
+
     clearCart();
 
     alert("Order placed successfully! 🎉");
 
-    // Go to Home page after placing order
+    // ==========================================
+    // GO TO HOME PAGE
+    // ==========================================
+
     navigate("/");
   };
+
+  // ==========================================
+  // EMPTY CART
+  // ==========================================
 
   if (cart.length === 0) {
     return (
       <main className="min-h-screen bg-slate-950 px-5 py-16 text-white">
         <div className="mx-auto max-w-2xl text-center">
 
-          <div className="text-6xl">🛒</div>
+          <div className="text-6xl">
+            🛒
+          </div>
 
           <h1 className="mt-6 text-3xl font-black">
             Your Cart is Empty
@@ -76,12 +166,17 @@ function Checkout() {
     );
   }
 
+  // ==========================================
+  // CHECKOUT PAGE
+  // ==========================================
+
   return (
     <main className="min-h-screen bg-slate-950 px-5 py-12 text-white sm:px-6">
 
       <div className="mx-auto max-w-5xl">
 
         {/* HEADER */}
+
         <div className="mb-10">
 
           <p className="text-sm font-bold uppercase tracking-widest text-blue-400">
@@ -97,6 +192,7 @@ function Checkout() {
         <div className="grid gap-8 lg:grid-cols-3">
 
           {/* CUSTOMER FORM */}
+
           <div className="rounded-2xl border border-slate-700 bg-slate-900 p-6 lg:col-span-2">
 
             <h2 className="text-xl font-black">
@@ -109,6 +205,7 @@ function Checkout() {
             >
 
               {/* NAME */}
+
               <div>
 
                 <label className="mb-2 block text-sm font-semibold text-slate-300">
@@ -120,12 +217,16 @@ function Checkout() {
                   name="customerName"
                   placeholder="Enter your full name"
                   required
+                  onInput={handleNameChange}
+                  pattern="[A-Za-z ]+"
+                  title="Name should contain letters and spaces only"
                   className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none focus:border-blue-500"
                 />
 
               </div>
 
               {/* PHONE */}
+
               <div>
 
                 <label className="mb-2 block text-sm font-semibold text-slate-300">
@@ -137,12 +238,17 @@ function Checkout() {
                   name="phone"
                   placeholder="03XX-XXXXXXX"
                   required
+                  maxLength="12"
+                  onInput={handlePhoneChange}
+                  pattern="03[0-9]{2}-[0-9]{7}"
+                  title="Phone number must be in the format 03XX-XXXXXXX"
                   className="w-full rounded-xl border border-slate-700 bg-slate-800 px-4 py-3 text-white outline-none focus:border-blue-500"
                 />
 
               </div>
 
               {/* ADDRESS */}
+
               <div>
 
                 <label className="mb-2 block text-sm font-semibold text-slate-300">
@@ -160,6 +266,7 @@ function Checkout() {
               </div>
 
               {/* PAYMENT */}
+
               <div>
 
                 <label className="mb-2 block text-sm font-semibold text-slate-300">
@@ -184,6 +291,7 @@ function Checkout() {
               </div>
 
               {/* PLACE ORDER */}
+
               <button
                 type="submit"
                 className="w-full rounded-xl bg-blue-600 px-6 py-3.5 font-bold text-white transition hover:bg-blue-500"
@@ -196,6 +304,7 @@ function Checkout() {
           </div>
 
           {/* ORDER SUMMARY */}
+
           <div className="h-fit rounded-2xl border border-slate-700 bg-slate-900 p-6">
 
             <h2 className="text-xl font-black">
@@ -233,6 +342,7 @@ function Checkout() {
               ))}
 
               {/* DELIVERY */}
+
               <div className="flex justify-between pt-3">
 
                 <span className="font-bold">
@@ -246,6 +356,7 @@ function Checkout() {
               </div>
 
               {/* TOTAL */}
+
               <div className="border-t border-slate-700 pt-4">
 
                 <div className="flex justify-between">

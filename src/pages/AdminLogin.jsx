@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { writeStorage } from "../utils/storage";
 
 function AdminLogin() {
   const [email, setEmail] = useState("");
@@ -15,7 +16,7 @@ function AdminLogin() {
       email.toLowerCase() === "rubab@gmail.com" &&
       password === "fall@2023"
     ) {
-      localStorage.setItem("adminLoggedIn", "true");
+      writeStorage("adminLoggedIn", true);
       navigate("/admin");
       return;
     }

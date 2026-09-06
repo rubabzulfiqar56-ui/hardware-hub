@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import productsData from "../data/products";
+import { readStorage, writeStorage, removeStorage } from "../utils/storage";
 
 function Admin() {
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
   const [orders, setOrders] = useState([]);
+  const [messages, setMessages] = useState([]);
   const [showProductForm, setShowProductForm] = useState(false);
 
   const [productForm, setProductForm] = useState({
@@ -19,14 +21,22 @@ function Admin() {
   });
 
   useEffect(() => {
-    const savedProducts =
-      JSON.parse(localStorage.getItem("adminProducts")) || [];
-
-    const savedOrders =
-      JSON.parse(localStorage.getItem("orders")) || [];
+    const savedProducts = readStorage("adminProducts", []);
+    const savedOrders = readStorage("orders", []);
 
     setProducts([...productsData, ...savedProducts]);
     setOrders(savedOrders);
+
+    fetch("http://localhost:5000/api/contact")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          setMessages(data.messages);
+        }
+      })
+      .catch((error) => {
+        console.error("Unable to load contact messages:", error);
+      });
   }, []);
 
   // Add Product
@@ -39,19 +49,43 @@ function Admin() {
     }));
   };
 
-  // Image Upload
+  // Resize/compress admin uploads before storing them in localStorage.
+  // This prevents very large camera images from making the browser slow.
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
 
     if (!file) return;
 
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file.");
+      return;
+    }
+
     const reader = new FileReader();
 
-    reader.onloadend = () => {
-      setProductForm((prev) => ({
-        ...prev,
-        image: reader.result,
-      }));
+    reader.onload = () => {
+      const image = new Image();
+
+      image.onload = () => {
+        const maxSize = 1200;
+        const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+        const canvas = document.createElement("canvas");
+
+        canvas.width = Math.max(1, Math.round(image.width * scale));
+        canvas.height = Math.max(1, Math.round(image.height * scale));
+
+        const context = canvas.getContext("2d");
+        context.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+        const compressed = canvas.toDataURL("image/webp", 0.75);
+
+        setProductForm((prev) => ({
+          ...prev,
+          image: compressed,
+        }));
+      };
+
+      image.src = reader.result;
     };
 
     reader.readAsDataURL(file);
@@ -72,8 +106,7 @@ function Admin() {
       return;
     }
 
-    const savedProducts =
-      JSON.parse(localStorage.getItem("adminProducts")) || [];
+    const savedProducts = readStorage("adminProducts", []);
 
     const newProduct = {
       id: Date.now(),
@@ -91,10 +124,7 @@ function Admin() {
       newProduct,
     ];
 
-    localStorage.setItem(
-      "adminProducts",
-      JSON.stringify(updatedProducts)
-    );
+    writeStorage("adminProducts", updatedProducts);
 
     setProducts((prev) => [
       ...prev,
@@ -126,17 +156,13 @@ function Admin() {
       return;
     }
 
-    const savedProducts =
-      JSON.parse(localStorage.getItem("adminProducts")) || [];
+    const savedProducts = readStorage("adminProducts", []);
 
     const updatedProducts = savedProducts.filter(
       (product) => product.id !== id
     );
 
-    localStorage.setItem(
-      "adminProducts",
-      JSON.stringify(updatedProducts)
-    );
+    writeStorage("adminProducts", updatedProducts);
 
     setProducts((prev) =>
       prev.filter((product) => product.id !== id)
@@ -156,10 +182,7 @@ function Admin() {
 
     setOrders(updatedOrders);
 
-    localStorage.setItem(
-      "orders",
-      JSON.stringify(updatedOrders)
-    );
+    writeStorage("orders", updatedOrders);
   };
 
   // Delete Order
@@ -172,10 +195,34 @@ function Admin() {
 
     setOrders(updatedOrders);
 
-    localStorage.setItem(
-      "orders",
-      JSON.stringify(updatedOrders)
-    );
+    writeStorage("orders", updatedOrders);
+  };
+
+  // Delete Customer Message
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/contact/${messageId}`,
+        {
+          method: "DELETE",
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.message || "Unable to delete message."
+        );
+      }
+
+      setMessages((prev) =>
+        prev.filter((message) => message.id !== messageId)
+      );
+    } catch (error) {
+      console.error("Delete message error:", error);
+      alert("Unable to delete message.");
+    }
   };
 
   // Dashboard Statistics
@@ -232,7 +279,7 @@ function Admin() {
 
   // Logout Admin
   const handleLogout = () => {
-    localStorage.removeItem("adminLoggedIn");
+    removeStorage("adminLoggedIn");
     navigate("/admin-login");
   };
 
@@ -589,7 +636,9 @@ function Admin() {
                           <img
                             src={product.image}
                             alt={product.name}
-                            className="h-12 w-12 rounded-lg object-cover"
+                            loading="lazy"
+                  decoding="async"
+                  className="h-12 w-12 rounded-lg object-cover"
                           />
                         ) : (
                           <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-slate-800">
@@ -639,6 +688,96 @@ function Admin() {
             </table>
 
           </div>
+
+        </section>
+
+
+        {/* CUSTOMER MESSAGES */}
+
+        <section className="mt-8 rounded-2xl border border-slate-800 bg-slate-900 p-6 sm:p-8">
+
+          <div className="mb-6 flex items-center justify-between">
+
+            <div>
+              <p className="font-semibold uppercase tracking-[0.2em] text-blue-400">
+                Contact Us
+              </p>
+
+              <h2 className="mt-2 text-2xl font-black text-white">
+                Customer Messages
+              </h2>
+            </div>
+
+            <span className="rounded-full bg-slate-800 px-4 py-2 text-sm font-semibold text-slate-300">
+              {messages.length} Messages
+            </span>
+
+          </div>
+
+          {messages.length === 0 ? (
+
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-8 text-center">
+              <p className="text-slate-400">
+                No customer messages yet.
+              </p>
+            </div>
+
+          ) : (
+
+            <div className="space-y-4">
+
+              {messages
+                .slice()
+                .reverse()
+                .map((message) => (
+
+                  <div
+                    key={message.id}
+                    className="rounded-xl border border-slate-800 bg-slate-950 p-5"
+                  >
+
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+
+                      <div className="min-w-0">
+
+                        <div className="flex flex-wrap items-center gap-3">
+
+                          <h3 className="text-lg font-bold text-white">
+                            {message.name}
+                          </h3>
+
+                          <span className="rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-400">
+                            {message.email}
+                          </span>
+
+                        </div>
+
+                        <p className="mt-4 whitespace-pre-wrap leading-7 text-slate-300">
+                          {message.message}
+                        </p>
+
+                        <p className="mt-4 text-xs text-slate-500">
+                          {new Date(message.createdAt).toLocaleString()}
+                        </p>
+
+                      </div>
+
+                      <button
+                        onClick={() => handleDeleteMessage(message.id)}
+                        className="shrink-0 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm font-semibold text-red-400 transition hover:bg-red-500 hover:text-white"
+                      >
+                        Delete
+                      </button>
+
+                    </div>
+
+                  </div>
+
+                ))}
+
+            </div>
+
+          )}
 
         </section>
 

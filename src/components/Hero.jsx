@@ -92,8 +92,10 @@ function Hero() {
           <div className="relative overflow-hidden rounded-3xl border border-slate-700 bg-slate-900 shadow-2xl">
 
             <img
-              src="/hero.jpg"
+              src="/hero.webp"
               alt="Hardware tools"
+              fetchPriority="high"
+              decoding="async"
               className="h-[350px] w-full object-cover sm:h-[450px] lg:h-[500px]"
             />
 
