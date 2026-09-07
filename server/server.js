@@ -55,11 +55,37 @@ if (!process.env.OTP_SECRET) {
 // MIDDLEWARE
 // ==========================================
 
-// Allow Vite frontend on localhost
+// Allow local Vite frontend + deployed Vercel frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(
   cors({
-    origin: true,
+    origin: (origin, callback) => {
+      // Allow requests without an Origin header
+      // Example: Postman, server health checks, etc.
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Allow configured frontend origins
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Allow Vercel preview deployments
+      if (origin.endsWith(".vercel.app")) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
+    },
+
     methods: ["GET", "POST", "DELETE", "OPTIONS"],
+
     allowedHeaders: ["Content-Type"],
   })
 );
@@ -633,6 +659,7 @@ ${new Date(newMessage.createdAt).toLocaleString()}
               line-height: 1.7;
             ">
               <strong>Message:</strong>
+
               <p style="
                 white-space: pre-wrap;
                 margin-top: 10px;
@@ -752,7 +779,7 @@ const server = app.listen(PORT, "0.0.0.0", () => {
   console.log("");
   console.log("=================================");
   console.log("🚀 Hardware Hub OTP Server");
-  console.log(`🌐 http://localhost:${PORT}`);
+  console.log(`🌐 Server listening on port ${PORT}`);
   console.log("📡 API Ready");
   console.log("📩 Contact API Ready");
   console.log("=================================");
